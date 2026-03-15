@@ -1,0 +1,4 @@
+--noNimblePath
+--path:"/home/lcrees/.nimble/pkgs2/nim-2.2.8-0a03571ebc8156f145d81551ad4f94729ca80fff"
+--path:"/home/lcrees/Source/gideon/basis/src"
+--path:"/home/lcrees/Source/gideon/basis/vendor"
