@@ -32,10 +32,10 @@ type
 # Open / close
 # -----------------------------------------------------------------------
 
-proc open*(host: string; port: uint16 = DefaultPort;
-           database: string = DefaultDatabase;
-           user: string = DefaultUser;
-           password: string = DefaultPassword): CHClient {.ch_err.} =
+proc open*(host: Host; port: uint16 = DefaultPort;
+           database: DbName = DefaultDatabase;
+           user: DbUser = DefaultUser;
+           password: DbPassword = DefaultPassword): CHClient {.ch_err.} =
   ## Connect to a ClickHouse server.
   CHClient(conn: connect(host, port, database, user, password))
 
@@ -57,7 +57,7 @@ proc ping*(client: var CHClient): bool {.ch_err.} =
 # Query (SELECT)
 # -----------------------------------------------------------------------
 
-proc query*(client: var CHClient; sql: string; query_id: string = ""): CHResult {.ch_err.} =
+proc query*(client: var CHClient; sql: QueryText; query_id: QueryId = QueryId("")): CHResult {.ch_err.} =
   ## Execute a SELECT query and return all result data.
   client.conn.send_query(query_id, sql)
   var all_columns: seq[CHColumn] = @[]
@@ -100,7 +100,7 @@ proc query*(client: var CHClient; sql: string; query_id: string = ""): CHResult 
 # Execute (DDL/DML, no result)
 # -----------------------------------------------------------------------
 
-proc execute*(client: var CHClient; sql: string; query_id: string = "") {.ch_err.} =
+proc execute*(client: var CHClient; sql: QueryText; query_id: QueryId = QueryId("")) {.ch_err.} =
   ## Execute a DDL/DML statement (no result data expected).
   client.conn.send_query(query_id, sql)
   while true:
@@ -118,8 +118,8 @@ proc execute*(client: var CHClient; sql: string; query_id: string = "") {.ch_err
 # Insert
 # -----------------------------------------------------------------------
 
-proc insert*(client: var CHClient; sql: string; blk: CHBlock;
-             query_id: string = "") {.ch_err.} =
+proc insert*(client: var CHClient; sql: QueryText; blk: CHBlock;
+             query_id: QueryId = QueryId("")) {.ch_err.} =
   ## Execute an INSERT query and send data.
   ## `sql` should be like "INSERT INTO table (col1, col2) VALUES"
   client.conn.send_query(query_id, sql)

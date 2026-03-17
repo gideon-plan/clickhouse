@@ -52,15 +52,15 @@ type
 # Connect and handshake
 # -----------------------------------------------------------------------
 
-proc send_hello(conn: var CHConnection; database, user, password: string) {.io_err.} =
+proc send_hello(conn: var CHConnection; database: DbName; user: DbUser; password: DbPassword) {.io_err.} =
   conn.sock.write_varuint(uint64(ord(ClientHello)))
   conn.sock.write_string(ClientName)
   conn.sock.write_varuint(ClientVersionMajor)
   conn.sock.write_varuint(ClientVersionMinor)
   conn.sock.write_varuint(ClientRevision)
-  conn.sock.write_string(database)
-  conn.sock.write_string(user)
-  conn.sock.write_string(password)
+  conn.sock.write_string($database)
+  conn.sock.write_string($user)
+  conn.sock.write_string($password)
 
 proc receive_hello(conn: var CHConnection) {.io_err.} =
   let packet_type = conn.sock.read_varuint()
@@ -89,14 +89,14 @@ proc send_addendum(conn: var CHConnection) {.io_err.} =
   if used_rev >= RevisionAddendum:
     conn.sock.write_string("") # quota_key
 
-proc connect*(host: string; port: uint16 = DefaultPort;
-              database: string = DefaultDatabase;
-              user: string = DefaultUser;
-              password: string = DefaultPassword;
+proc connect*(host: Host; port: uint16 = DefaultPort;
+              database: DbName = DefaultDatabase;
+              user: DbUser = DefaultUser;
+              password: DbPassword = DefaultPassword;
               timeout_ms: int = DefaultConnectTimeoutSec * 1000): CHConnection {.io_err.} =
   ## Connect to a ClickHouse server and perform handshake.
   result.sock = newSocket()
-  result.sock.connect(host, Port(port), timeout_ms)
+  result.sock.connect($host, Port(port), timeout_ms)
   result.send_hello(database, user, password)
   result.receive_hello()
   result.send_addendum()
@@ -115,12 +115,12 @@ proc revision*(conn: CHConnection): uint64 {.ok_inline.} =
 # Send query
 # -----------------------------------------------------------------------
 
-proc send_query*(conn: var CHConnection; query_id, query_text: string;
+proc send_query*(conn: var CHConnection; query_id: QueryId; query_text: QueryText;
                  compression: Compression = CompressionDisabled) {.io_err.} =
   ## Send a Query packet.
   let rev = min(ClientRevision, conn.server.revision)
   conn.sock.write_varuint(uint64(ord(ClientQuery)))
-  conn.sock.write_string(query_id)
+  conn.sock.write_string($query_id)
   # ClientInfo
   if rev >= RevisionClientWriteInfo:
     conn.sock.write_uint8(uint8(ord(QueryInitial))) # query_kind
@@ -158,7 +158,7 @@ proc send_query*(conn: var CHConnection; query_id, query_text: string;
   # Compression
   conn.sock.write_varuint(uint64(ord(compression)))
   # Query text
-  conn.sock.write_string(query_text)
+  conn.sock.write_string($query_text)
   # Parameters
   if rev >= RevisionParameters:
     conn.sock.write_string("")

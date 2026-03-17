@@ -5,6 +5,37 @@ import basis/code/throw
 standard_pragmas()
 
 # -----------------------------------------------------------------------
+# Distinct string types
+# -----------------------------------------------------------------------
+
+type
+  Host* = distinct string
+  DbName* = distinct string
+  DbUser* = distinct string
+  DbPassword* = distinct string
+  QueryId* = distinct string
+  QueryText* = distinct string
+
+func `$`*(v: Host): string {.borrow.}
+func `$`*(v: DbName): string {.borrow.}
+func `$`*(v: DbUser): string {.borrow.}
+func `$`*(v: DbPassword): string {.borrow.}
+func `$`*(v: QueryId): string {.borrow.}
+func `$`*(v: QueryText): string {.borrow.}
+func `==`*(a, b: Host): bool {.borrow.}
+func `==`*(a, b: DbName): bool {.borrow.}
+func `==`*(a, b: DbUser): bool {.borrow.}
+func `==`*(a, b: DbPassword): bool {.borrow.}
+func `==`*(a, b: QueryId): bool {.borrow.}
+func `==`*(a, b: QueryText): bool {.borrow.}
+func len*(v: Host): int {.borrow.}
+func len*(v: DbName): int {.borrow.}
+func len*(v: DbUser): int {.borrow.}
+func len*(v: DbPassword): int {.borrow.}
+func len*(v: QueryId): int {.borrow.}
+func len*(v: QueryText): int {.borrow.}
+
+# -----------------------------------------------------------------------
 # Client packet types
 # -----------------------------------------------------------------------
 
@@ -129,9 +160,9 @@ const
 const
   DefaultPort* = 9000'u16
   DefaultSecurePort* = 9440'u16
-  DefaultDatabase* = ""
-  DefaultUser* = "default"
-  DefaultPassword* = ""
+  DefaultDatabase* = DbName("")
+  DefaultUser* = DbUser("default")
+  DefaultPassword* = DbPassword("")
   DefaultConnectTimeoutSec* = 10
   DefaultTimeoutSec* = 300
   DefaultCompressBlockSize* = 1048576
