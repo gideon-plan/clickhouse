@@ -105,7 +105,8 @@ proc connect*(host: Host; port: uint16 = DefaultPort;
 proc disconnect*(conn: var CHConnection) {.io_err.} =
   ## Close the connection.
   if conn.connected:
-    conn.sock.close()
+    try: conn.sock.close()
+    except Exception: discard
     conn.connected = false
 
 proc revision*(conn: CHConnection): uint64 {.ok_inline.} =
