@@ -3,6 +3,7 @@
 import std/net
 
 import basis/code/throw
+import basis/code/maybe
 
 import clickhouse/wire
 import clickhouse/protocol
@@ -153,3 +154,17 @@ proc insert*(client: var CHClient; sql: QueryText; blk: CHBlock;
       break
     of pkException:
       raise pkt.error
+
+# -----------------------------------------------------------------------
+# Maybe overloads (non-raising)
+# -----------------------------------------------------------------------
+
+proc try_query*(client: var CHClient; sql: QueryText; query_id: QueryId = QueryId("")): Maybe[CHResult, ref CHError] {.ch_err.} =
+  try: Maybe[CHResult, ref CHError].yes(client.query(sql, query_id))
+  except CHError as e: Maybe[CHResult, ref CHError].no(e)
+
+proc try_execute*(client: var CHClient; sql: QueryText; query_id: QueryId = QueryId("")): Maybe[bool, ref CHError] {.ch_err.} =
+  try:
+    client.execute(sql, query_id)
+    Maybe[bool, ref CHError].yes(true)
+  except CHError as e: Maybe[bool, ref CHError].no(e)
