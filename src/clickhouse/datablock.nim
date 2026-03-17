@@ -2,8 +2,7 @@
 ##
 ## See clickhouse_protocol.md section 9.
 
-import std/net
-import std/strutils
+import std/[net, strutils]
 
 import basis/code/throw
 

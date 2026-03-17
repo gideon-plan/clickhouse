@@ -3,9 +3,7 @@
 ## All column data is column-major: all values for one column are written
 ## contiguously. See clickhouse_protocol.md section 13.
 
-import std/net
-import std/strutils
-import std/parseutils
+import std/[net, strutils, parseutils]
 
 import basis/code/throw
 

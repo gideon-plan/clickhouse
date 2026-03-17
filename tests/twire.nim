@@ -1,7 +1,6 @@
 ## Unit tests for wire primitives.
 
-import std/net
-import std/unittest
+import std/[net, unittest]
 
 import clickhouse/wire
 
