@@ -3,7 +3,7 @@
 import std/net
 
 import basis/code/throw
-import basis/code/maybe
+import basis/code/choice
 
 import clickhouse/wire
 import clickhouse/protocol
@@ -159,14 +159,14 @@ proc insert*(client: var CHClient; sql: QueryText; blk: CHBlock;
 #== MAYBE OVERLOADS (NON-RAISING) ======================================================================================
 #=======================================================================================================================
 
-proc try_query*(client: var CHClient; sql: QueryText; query_id: QueryId = QueryId("")): Maybe[CHResult, ref CHError] {.ch_err.} =
+proc try_query*(client: var CHClient; sql: QueryText; query_id: QueryId = QueryId("")): Choice[CHResult] {.ch_err.} =
   ## Execute a SELECT query, returning Maybe instead of raising.
-  try: Maybe[CHResult, ref CHError].yes(client.query(sql, query_id))
-  except CHError as e: Maybe[CHResult, ref CHError].no(e)
+  try: good(client.query(sql, query_id))
+  except CHError as e: bad[CHResult]("clickhouse", e.msg)
 
-proc try_execute*(client: var CHClient; sql: QueryText; query_id: QueryId = QueryId("")): Maybe[bool, ref CHError] {.ch_err.} =
+proc try_execute*(client: var CHClient; sql: QueryText; query_id: QueryId = QueryId("")): Choice[bool] {.ch_err.} =
   ## Execute a DDL/DML statement, returning Maybe instead of raising.
   try:
     client.execute(sql, query_id)
-    Maybe[bool, ref CHError].yes(true)
-  except CHError as e: Maybe[bool, ref CHError].no(e)
+    good(true)
+  except CHError as e: bad[bool]("clickhouse", e.msg)
