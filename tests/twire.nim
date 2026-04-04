@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## Unit tests for wire primitives.
 
 import std/[net, unittest]

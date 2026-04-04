@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## LZ4 block compression/decompression -- pure Nim.
 ##
 ## Implements the LZ4 block format (not frame format).

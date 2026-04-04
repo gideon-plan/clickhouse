@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## ClickHouse column type encoding/decoding.
 ##
 ## All column data is column-major: all values for one column are written

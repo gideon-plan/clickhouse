@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## ClickHouse data block encoding/decoding.
 ##
 ## See clickhouse_protocol.md section 9.

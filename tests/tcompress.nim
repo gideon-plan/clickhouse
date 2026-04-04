@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## Unit tests for LZ4 compression and CityHash128.
 
 import std/unittest

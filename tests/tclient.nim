@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## Integration tests -- requires a running ClickHouse server on localhost:19000.
 
 import std/unittest

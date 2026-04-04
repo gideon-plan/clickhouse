@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## Unit tests for protocol constants.
 
 import std/unittest

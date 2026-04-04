@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## High-level ClickHouse client API.
 
 import std/net

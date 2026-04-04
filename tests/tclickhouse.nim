@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## ClickHouse test runner.
 
 import twire

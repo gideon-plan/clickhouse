@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## CityHash128 -- pure Nim port of Google's CityHash128.
 ##
 ## Reference: https://github.com/google/cityhash

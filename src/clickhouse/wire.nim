@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## Wire primitives for the ClickHouse native binary protocol.
 ##
 ## All multi-byte integers are little-endian. Strings are length-prefixed

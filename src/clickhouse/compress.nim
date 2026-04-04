@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## ClickHouse compression frame: CityHash128 checksum + LZ4 block.
 ##
 ## Frame layout (see clickhouse_protocol.md section 8):

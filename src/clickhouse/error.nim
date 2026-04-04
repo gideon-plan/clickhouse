@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## ClickHouse server exception decoding.
 
 import std/net

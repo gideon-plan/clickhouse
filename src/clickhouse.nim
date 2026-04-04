@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## ClickHouse native binary protocol client for Nim.
 
 import clickhouse/client

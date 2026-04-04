@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## Unit tests for data block types.
 
 import std/unittest

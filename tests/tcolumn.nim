@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## Unit tests for column type parsing.
 
 import std/unittest

@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## ClickHouse TCP connection and handshake.
 
 import std/net

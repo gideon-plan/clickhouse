@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## Integration test: verso against live ClickHouse server.
 ##
 ## Requires: podman run -d --name verso-ch -p 9000:9000 -e CLICKHOUSE_USER=default -e CLICKHOUSE_PASSWORD=test docker.io/clickhouse/clickhouse-server:latest

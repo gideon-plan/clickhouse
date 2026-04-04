@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## ClickHouse native binary protocol constants.
 
 import basis/code/throw
