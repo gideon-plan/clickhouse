@@ -28,7 +28,7 @@ suite "verso clickhouse integration":
     c.execute(QueryText("DROP TABLE IF EXISTS verso_mutation"))
     c.execute(QueryText("DROP TABLE IF EXISTS verso_entity"))
     c.execute(QueryText("DROP TABLE IF EXISTS verso_delta"))
-    c.execute(QueryText("CREATE TABLE verso_mutation (id String, parent String, actor String, timestamp Int64, plan_version Int32, space String, partition Int32) ENGINE = MergeTree() ORDER BY id"))
+    c.execute(QueryText("CREATE TABLE verso_mutation (id String, parent String, actor String, created Int64, plan_version Int32, space String, partition Int32) ENGINE = MergeTree() ORDER BY id"))
     c.execute(QueryText("CREATE TABLE verso_entity (mutation_id String, link_type String, instance_id String, life Int32) ENGINE = MergeTree() ORDER BY mutation_id"))
     c.execute(QueryText("CREATE TABLE verso_delta (mutation_id String, knot String, value String, op Int32, life Int32) ENGINE = MergeTree() ORDER BY mutation_id"))
 
@@ -36,8 +36,8 @@ suite "verso clickhouse integration":
     c.close()
 
   test "store and query mutation":
-    var m = Mutation(parent: "", actor: "admin", timestamp: 100,
-                     plan_version: 1, space: "home", partition: pData,
+    var m = Mutation(parent: "", actor: "admin", created: 100,
+                     plan_version: 1, space: "home", partition: Partition.Data,
                      entities: @[entity("Person", "abc")],
                      deltas: @[delta_add("name", "Alice")])
     stamp(m)
@@ -49,7 +49,7 @@ suite "verso clickhouse integration":
         CHColumn(name: "id", col_type: parse_ch_type("String"), data: @[ch_val_str(m.id)]),
         CHColumn(name: "parent", col_type: parse_ch_type("String"), data: @[ch_val_str(m.parent)]),
         CHColumn(name: "actor", col_type: parse_ch_type("String"), data: @[ch_val_str(m.actor)]),
-        CHColumn(name: "timestamp", col_type: parse_ch_type("Int64"), data: @[ch_val_i64(m.timestamp)]),
+        CHColumn(name: "created", col_type: parse_ch_type("Int64"), data: @[ch_val_i64(m.created)]),
         CHColumn(name: "plan_version", col_type: parse_ch_type("Int32"), data: @[ch_val_i32(int32(m.plan_version))]),
         CHColumn(name: "space", col_type: parse_ch_type("String"), data: @[ch_val_str(m.space)]),
         CHColumn(name: "partition", col_type: parse_ch_type("Int32"), data: @[ch_val_i32(int32(ord(m.partition)))]),
@@ -82,7 +82,7 @@ suite "verso clickhouse integration":
       c.insert(QueryText("INSERT INTO verso_delta VALUES"), del_blk)
 
     # Query back
-    let r = c.query(QueryText("SELECT id, actor, timestamp, space FROM verso_mutation WHERE id = '" & m.id & "'"))
+    let r = c.query(QueryText("SELECT id, actor, created, space FROM verso_mutation WHERE id = '" & m.id & "'"))
     check r.columns.len == 4
     check r.columns[0].data.len == 1
     check r.columns[0].data[0].str == m.id
@@ -99,7 +99,7 @@ suite "verso clickhouse integration":
     let dr = c.query(QueryText("SELECT knot, value, op FROM verso_delta WHERE mutation_id = '" & m.id & "'"))
     check dr.columns[0].data[0].str == "name"
     check dr.columns[1].data[0].str == "Alice"
-    check dr.columns[2].data[0].i32 == int32(ord(doAdd))
+    check dr.columns[2].data[0].i32 == int32(ord(DeltaOp.Add))
 
   test "query nonexistent returns empty":
     let r = c.query(QueryText("SELECT * FROM verso_mutation WHERE id = 'nonexistent'"))
@@ -142,10 +142,10 @@ suite "verso clickhouse integration":
     check post.columns[0].data[0].str == "Bob"
 
   test "all Life states persist":
-    var m = Mutation(parent: "", actor: "admin", timestamp: 999,
-                     plan_version: 42, space: "test", partition: pWork,
+    var m = Mutation(parent: "", actor: "admin", created: 999,
+                     plan_version: 42, space: "test", partition: Partition.Work,
                      entities: @[entity("A", "a1", Life.Smash)],
-                     deltas: @[Delta(knot: "x", value: "1", op: doRemove, life: Life.Gone)])
+                     deltas: @[Delta(knot: "x", value: "1", op: DeltaOp.Remove, life: Life.Gone)])
     stamp(m)
 
     let mut_blk = CHBlock(
@@ -154,7 +154,7 @@ suite "verso clickhouse integration":
         CHColumn(name: "id", col_type: parse_ch_type("String"), data: @[ch_val_str(m.id)]),
         CHColumn(name: "parent", col_type: parse_ch_type("String"), data: @[ch_val_str(m.parent)]),
         CHColumn(name: "actor", col_type: parse_ch_type("String"), data: @[ch_val_str(m.actor)]),
-        CHColumn(name: "timestamp", col_type: parse_ch_type("Int64"), data: @[ch_val_i64(m.timestamp)]),
+        CHColumn(name: "created", col_type: parse_ch_type("Int64"), data: @[ch_val_i64(m.created)]),
         CHColumn(name: "plan_version", col_type: parse_ch_type("Int32"), data: @[ch_val_i32(int32(m.plan_version))]),
         CHColumn(name: "space", col_type: parse_ch_type("String"), data: @[ch_val_str(m.space)]),
         CHColumn(name: "partition", col_type: parse_ch_type("Int32"), data: @[ch_val_i32(int32(ord(m.partition)))]),
@@ -175,4 +175,4 @@ suite "verso clickhouse integration":
     check er.columns[0].data[0].i32 == int32(ord(Life.Smash))
 
     let mr = c.query(QueryText("SELECT partition FROM verso_mutation WHERE id = '" & m.id & "'"))
-    check mr.columns[0].data[0].i32 == int32(ord(pWork))
+    check mr.columns[0].data[0].i32 == int32(ord(Partition.Work))

@@ -35,7 +35,7 @@ type
     LowCardinality
     Nothing
 
-  CHType* = ref object
+  CHKind* = ref object
     case kind*: CHTypeKind
     of CHTypeKind.FixedString:
       fixed_len*: int
@@ -49,16 +49,16 @@ type
     of CHTypeKind.Enum8, CHTypeKind.Enum16:
       enum_values*: seq[(string, int16)]
     of CHTypeKind.Array:
-      elem_type*: CHType
+      elem_type*: CHKind
     of CHTypeKind.Nullable:
-      inner_type*: CHType
+      inner_type*: CHKind
     of CHTypeKind.Tuple:
-      elem_types*: seq[CHType]
+      elem_types*: seq[CHKind]
     of CHTypeKind.Map:
-      key_type*: CHType
-      val_type*: CHType
+      key_type*: CHKind
+      val_type*: CHKind
     of CHTypeKind.LowCardinality:
-      dict_type*: CHType
+      dict_type*: CHKind
     else:
       discard
 
@@ -71,34 +71,34 @@ proc skip_ws(s: string; pos: int): int {.ok.} =
   while p < s.len and s[p] == ' ': inc p
   p
 
-proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
-  ## Parse a ClickHouse type string into a CHType descriptor.
+proc parse_ch_type*(type_str: string): CHKind {.parse_err.} =
+  ## Parse a ClickHouse type string into a CHKind descriptor.
   var s = type_str.strip()
 
   # Simple types
   case s
-  of "UInt8": return CHType(kind: CHTypeKind.UInt8)
-  of "UInt16": return CHType(kind: CHTypeKind.UInt16)
-  of "UInt32": return CHType(kind: CHTypeKind.UInt32)
-  of "UInt64": return CHType(kind: CHTypeKind.UInt64)
-  of "UInt128": return CHType(kind: CHTypeKind.UInt128)
-  of "UInt256": return CHType(kind: CHTypeKind.UInt256)
-  of "Int8": return CHType(kind: CHTypeKind.Int8)
-  of "Int16": return CHType(kind: CHTypeKind.Int16)
-  of "Int32": return CHType(kind: CHTypeKind.Int32)
-  of "Int64": return CHType(kind: CHTypeKind.Int64)
-  of "Int128": return CHType(kind: CHTypeKind.Int128)
-  of "Int256": return CHType(kind: CHTypeKind.Int256)
-  of "Float32": return CHType(kind: CHTypeKind.Float32)
-  of "Float64": return CHType(kind: CHTypeKind.Float64)
-  of "Bool": return CHType(kind: CHTypeKind.Bool)
-  of "String": return CHType(kind: CHTypeKind.String)
-  of "Date": return CHType(kind: CHTypeKind.Date)
-  of "Date32": return CHType(kind: CHTypeKind.Date32)
-  of "UUID": return CHType(kind: CHTypeKind.UUID)
-  of "IPv4": return CHType(kind: CHTypeKind.IPv4)
-  of "IPv6": return CHType(kind: CHTypeKind.IPv6)
-  of "Nothing": return CHType(kind: CHTypeKind.Nothing)
+  of "UInt8": return CHKind(kind: CHTypeKind.UInt8)
+  of "UInt16": return CHKind(kind: CHTypeKind.UInt16)
+  of "UInt32": return CHKind(kind: CHTypeKind.UInt32)
+  of "UInt64": return CHKind(kind: CHTypeKind.UInt64)
+  of "UInt128": return CHKind(kind: CHTypeKind.UInt128)
+  of "UInt256": return CHKind(kind: CHTypeKind.UInt256)
+  of "Int8": return CHKind(kind: CHTypeKind.Int8)
+  of "Int16": return CHKind(kind: CHTypeKind.Int16)
+  of "Int32": return CHKind(kind: CHTypeKind.Int32)
+  of "Int64": return CHKind(kind: CHTypeKind.Int64)
+  of "Int128": return CHKind(kind: CHTypeKind.Int128)
+  of "Int256": return CHKind(kind: CHTypeKind.Int256)
+  of "Float32": return CHKind(kind: CHTypeKind.Float32)
+  of "Float64": return CHKind(kind: CHTypeKind.Float64)
+  of "Bool": return CHKind(kind: CHTypeKind.Bool)
+  of "String": return CHKind(kind: CHTypeKind.String)
+  of "Date": return CHKind(kind: CHTypeKind.Date)
+  of "Date32": return CHKind(kind: CHTypeKind.Date32)
+  of "UUID": return CHKind(kind: CHTypeKind.UUID)
+  of "IPv4": return CHKind(kind: CHTypeKind.IPv4)
+  of "IPv6": return CHKind(kind: CHTypeKind.IPv6)
+  of "Nothing": return CHKind(kind: CHTypeKind.Nothing)
   else:
     discard
 
@@ -108,7 +108,7 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
     var n: int
     if parseInt(inner, n) == 0:
       raise newException(ValueError, "invalid FixedString length: " & inner)
-    return CHType(kind: CHTypeKind.FixedString, fixed_len: n)
+    return CHKind(kind: CHTypeKind.FixedString, fixed_len: n)
 
   if s.starts_with("DateTime64("):
     let inner = s[11 ..< s.len - 1]
@@ -117,42 +117,42 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
     if parseInt(parts[0].strip(), prec) == 0:
       raise newException(ValueError, "invalid DateTime64 precision: " & parts[0])
     let tz_str = if parts.len > 1: parts[1].strip().strip(chars = {'\'', '"'}) else: ""
-    return CHType(kind: CHTypeKind.DateTime64, precision: prec, tz64: tz_str)
+    return CHKind(kind: CHTypeKind.DateTime64, precision: prec, tz64: tz_str)
 
   if s.starts_with("DateTime("):
     let inner = s[9 ..< s.len - 1].strip().strip(chars = {'\'', '"'})
-    return CHType(kind: CHTypeKind.DateTime, tz: inner)
+    return CHKind(kind: CHTypeKind.DateTime, tz: inner)
 
   if s == "DateTime":
-    return CHType(kind: CHTypeKind.DateTime, tz: "")
+    return CHKind(kind: CHTypeKind.DateTime, tz: "")
 
   if s.starts_with("Decimal256("):
     let inner = s[11 ..< s.len - 1]
     var sc: int
     if parseInt(inner.strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal256 scale: " & inner)
-    return CHType(kind: CHTypeKind.Decimal256, scale: sc)
+    return CHKind(kind: CHTypeKind.Decimal256, scale: sc)
 
   if s.starts_with("Decimal128("):
     let inner = s[11 ..< s.len - 1]
     var sc: int
     if parseInt(inner.strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal128 scale: " & inner)
-    return CHType(kind: CHTypeKind.Decimal128, scale: sc)
+    return CHKind(kind: CHTypeKind.Decimal128, scale: sc)
 
   if s.starts_with("Decimal64("):
     let inner = s[10 ..< s.len - 1]
     var sc: int
     if parseInt(inner.strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal64 scale: " & inner)
-    return CHType(kind: CHTypeKind.Decimal64, scale: sc)
+    return CHKind(kind: CHTypeKind.Decimal64, scale: sc)
 
   if s.starts_with("Decimal32("):
     let inner = s[10 ..< s.len - 1]
     var sc: int
     if parseInt(inner.strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal32 scale: " & inner)
-    return CHType(kind: CHTypeKind.Decimal32, scale: sc)
+    return CHKind(kind: CHTypeKind.Decimal32, scale: sc)
 
   if s.starts_with("Decimal("):
     let inner = s[8 ..< s.len - 1]
@@ -164,23 +164,23 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
       raise newException(ValueError, "invalid Decimal precision: " & parts[0])
     if parseInt(parts[1].strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal scale: " & parts[1])
-    if prec <= 9: return CHType(kind: CHTypeKind.Decimal32, scale: sc)
-    elif prec <= 18: return CHType(kind: CHTypeKind.Decimal64, scale: sc)
-    elif prec <= 38: return CHType(kind: CHTypeKind.Decimal128, scale: sc)
-    else: return CHType(kind: CHTypeKind.Decimal256, scale: sc)
+    if prec <= 9: return CHKind(kind: CHTypeKind.Decimal32, scale: sc)
+    elif prec <= 18: return CHKind(kind: CHTypeKind.Decimal64, scale: sc)
+    elif prec <= 38: return CHKind(kind: CHTypeKind.Decimal128, scale: sc)
+    else: return CHKind(kind: CHTypeKind.Decimal256, scale: sc)
 
   # Nested parameterized types -- need bracket matching
   if s.starts_with("Nullable("):
     let inner = s[9 ..< s.len - 1]
-    return CHType(kind: CHTypeKind.Nullable, inner_type: parse_ch_type(inner))
+    return CHKind(kind: CHTypeKind.Nullable, inner_type: parse_ch_type(inner))
 
   if s.starts_with("Array("):
     let inner = s[6 ..< s.len - 1]
-    return CHType(kind: CHTypeKind.Array, elem_type: parse_ch_type(inner))
+    return CHKind(kind: CHTypeKind.Array, elem_type: parse_ch_type(inner))
 
   if s.starts_with("LowCardinality("):
     let inner = s[15 ..< s.len - 1]
-    return CHType(kind: CHTypeKind.LowCardinality, dict_type: parse_ch_type(inner))
+    return CHKind(kind: CHTypeKind.LowCardinality, dict_type: parse_ch_type(inner))
 
   if s.starts_with("Map("):
     let inner = s[4 ..< s.len - 1]
@@ -197,11 +197,11 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
       raise newException(ValueError, "invalid Map type: " & s)
     let kt = parse_ch_type(inner[0 ..< split_pos].strip())
     let vt = parse_ch_type(inner[split_pos + 1 ..< inner.len].strip())
-    return CHType(kind: CHTypeKind.Map, key_type: kt, val_type: vt)
+    return CHKind(kind: CHTypeKind.Map, key_type: kt, val_type: vt)
 
   if s.starts_with("Tuple("):
     let inner = s[6 ..< s.len - 1]
-    var elems: seq[CHType] = @[]
+    var elems: seq[CHKind] = @[]
     var depth = 0
     var start = 0
     for i in 0 ..< inner.len:
@@ -211,7 +211,7 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
         elems.add(parse_ch_type(inner[start ..< i].strip()))
         start = i + 1
     elems.add(parse_ch_type(inner[start ..< inner.len].strip()))
-    return CHType(kind: CHTypeKind.Tuple, elem_types: elems)
+    return CHKind(kind: CHTypeKind.Tuple, elem_types: elems)
 
   if s.starts_with("Enum8(") or s.starts_with("Enum16("):
     let is8 = s.starts_with("Enum8(")
@@ -229,9 +229,9 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
         raise newException(ValueError, "invalid Enum value: " & p)
       values.add((name, int16(val)))
     if is8:
-      return CHType(kind: CHTypeKind.Enum8, enum_values: values)
+      return CHKind(kind: CHTypeKind.Enum8, enum_values: values)
     else:
-      return CHType(kind: CHTypeKind.Enum16, enum_values: values)
+      return CHKind(kind: CHTypeKind.Enum16, enum_values: values)
 
   raise newException(ValueError, "unknown ClickHouse type: " & s)
 
@@ -275,14 +275,14 @@ type
 
   CHColumn* = object
     name*: string
-    col_type*: CHType
+    col_type*: CHKind
     data*: seq[CHValue]
 
 #=======================================================================================================================
 #== READ COLUMN DATA FROM SOCKET =======================================================================================
 #=======================================================================================================================
 
-proc read_column_data*(sock: Socket; col_type: CHType; num_rows: int): seq[CHValue] {.io_err.} =
+proc read_column_data*(sock: Socket; col_type: CHKind; num_rows: int): seq[CHValue] {.io_err.} =
   ## Read num_rows of column data for the given type.
   result = newSeq[CHValue](num_rows)
   case col_type.kind
@@ -490,7 +490,7 @@ proc read_column_data*(sock: Socket; col_type: CHType; num_rows: int): seq[CHVal
 #== WRITE COLUMN DATA TO SOCKET ========================================================================================
 #=======================================================================================================================
 
-proc write_column_data*(sock: Socket; col_type: CHType; data: openArray[CHValue]) {.io_err.} =
+proc write_column_data*(sock: Socket; col_type: CHKind; data: openArray[CHValue]) {.io_err.} =
   ## Write column data for the given type.
   case col_type.kind
   of CHTypeKind.UInt8, CHTypeKind.Bool:

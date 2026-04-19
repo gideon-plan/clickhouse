@@ -61,7 +61,7 @@ suite "client integration":
     # Build data block
     let col_id = CHColumn(
       name: "id",
-      col_type: CHType(kind: CHTypeKind.UInt32),
+      col_type: CHKind(kind: CHTypeKind.UInt32),
       data: @[
         CHValue(kind: CHTypeKind.UInt32, u32: 1),
         CHValue(kind: CHTypeKind.UInt32, u32: 2),
@@ -70,7 +70,7 @@ suite "client integration":
     )
     let col_name = CHColumn(
       name: "name",
-      col_type: CHType(kind: CHTypeKind.String),
+      col_type: CHKind(kind: CHTypeKind.String),
       data: @[
         CHValue(kind: CHTypeKind.String, str: "alpha"),
         CHValue(kind: CHTypeKind.String, str: "beta"),
@@ -79,7 +79,7 @@ suite "client integration":
     )
     let col_val = CHColumn(
       name: "val",
-      col_type: CHType(kind: CHTypeKind.Float64),
+      col_type: CHKind(kind: CHTypeKind.Float64),
       data: @[
         CHValue(kind: CHTypeKind.Float64, f64: 1.1),
         CHValue(kind: CHTypeKind.Float64, f64: 2.2),

@@ -37,7 +37,7 @@ proc default_block_info(): BlockInfo {.ok.} =
 #== TYPE STRING RECONSTRUCTION =========================================================================================
 #=======================================================================================================================
 
-proc type_string*(t: CHType): string {.ok.} =
+proc type_string*(t: CHKind): string {.ok.} =
   case t.kind
   of CHTypeKind.UInt8: "UInt8"
   of CHTypeKind.UInt16: "UInt16"
