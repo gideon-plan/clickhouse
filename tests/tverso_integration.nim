@@ -12,13 +12,13 @@ import clickhouse/datablock
 import clickhouse/protocol
 
 proc ch_val_str(s: string): CHValue =
-  CHValue(kind: chkString, str: s)
+  CHValue(kind: CHTypeKind.String, str: s)
 
 proc ch_val_i64(v: int64): CHValue =
-  CHValue(kind: chkInt64, i64: v)
+  CHValue(kind: CHTypeKind.Int64, i64: v)
 
 proc ch_val_i32(v: int32): CHValue =
-  CHValue(kind: chkInt32, i32: v)
+  CHValue(kind: CHTypeKind.Int32, i32: v)
 
 suite "verso clickhouse integration":
   var c: CHClient
@@ -117,7 +117,7 @@ suite "verso clickhouse integration":
         CHColumn(name: "mutation_id", col_type: parse_ch_type("String"), data: @[ch_val_str("m1")]),
         CHColumn(name: "knot", col_type: parse_ch_type("String"), data: @[ch_val_str("name")]),
         CHColumn(name: "value", col_type: parse_ch_type("String"), data: @[ch_val_str("Alice")]),
-        CHColumn(name: "sign", col_type: parse_ch_type("Int8"), data: @[CHValue(kind: chkInt8, i8: 1)]),
+        CHColumn(name: "sign", col_type: parse_ch_type("Int8"), data: @[CHValue(kind: CHTypeKind.Int8, i8: 1)]),
       ])
     c.insert(QueryText("INSERT INTO verso_collapsing VALUES"), add_blk)
 
@@ -128,7 +128,7 @@ suite "verso clickhouse integration":
         CHColumn(name: "mutation_id", col_type: parse_ch_type("String"), data: @[ch_val_str("m1"), ch_val_str("m1")]),
         CHColumn(name: "knot", col_type: parse_ch_type("String"), data: @[ch_val_str("name"), ch_val_str("name")]),
         CHColumn(name: "value", col_type: parse_ch_type("String"), data: @[ch_val_str("Alice"), ch_val_str("Bob")]),
-        CHColumn(name: "sign", col_type: parse_ch_type("Int8"), data: @[CHValue(kind: chkInt8, i8: -1), CHValue(kind: chkInt8, i8: 1)]),
+        CHColumn(name: "sign", col_type: parse_ch_type("Int8"), data: @[CHValue(kind: CHTypeKind.Int8, i8: -1), CHValue(kind: CHTypeKind.Int8, i8: 1)]),
       ])
     c.insert(QueryText("INSERT INTO verso_collapsing VALUES"), swap_blk)
 

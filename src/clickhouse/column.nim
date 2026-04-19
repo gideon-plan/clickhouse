@@ -20,44 +20,44 @@ raises_error(parse_err, [ValueError], [])
 #=======================================================================================================================
 
 type
-  CHTypeKind* = enum
-    chkUInt8, chkUInt16, chkUInt32, chkUInt64, chkUInt128, chkUInt256
-    chkInt8, chkInt16, chkInt32, chkInt64, chkInt128, chkInt256
-    chkFloat32, chkFloat64
-    chkBool
-    chkString, chkFixedString
-    chkDate, chkDate32, chkDateTime, chkDateTime64
-    chkDecimal32, chkDecimal64, chkDecimal128, chkDecimal256
-    chkUUID
-    chkIPv4, chkIPv6
-    chkEnum8, chkEnum16
-    chkArray, chkNullable, chkTuple, chkMap
-    chkLowCardinality
-    chkNothing
+  CHTypeKind* {.pure.} = enum
+    UInt8, UInt16, UInt32, UInt64, UInt128, UInt256
+    Int8, Int16, Int32, Int64, Int128, Int256
+    Float32, Float64
+    Bool
+    String, FixedString
+    Date, Date32, DateTime, DateTime64
+    Decimal32, Decimal64, Decimal128, Decimal256
+    UUID
+    IPv4, IPv6
+    Enum8, Enum16
+    Array, Nullable, Tuple, Map
+    LowCardinality
+    Nothing
 
   CHType* = ref object
     case kind*: CHTypeKind
-    of chkFixedString:
+    of CHTypeKind.FixedString:
       fixed_len*: int
-    of chkDateTime:
+    of CHTypeKind.DateTime:
       tz*: string
-    of chkDateTime64:
+    of CHTypeKind.DateTime64:
       precision*: int
       tz64*: string
-    of chkDecimal32, chkDecimal64, chkDecimal128, chkDecimal256:
+    of CHTypeKind.Decimal32, CHTypeKind.Decimal64, CHTypeKind.Decimal128, CHTypeKind.Decimal256:
       scale*: int
-    of chkEnum8, chkEnum16:
+    of CHTypeKind.Enum8, CHTypeKind.Enum16:
       enum_values*: seq[(string, int16)]
-    of chkArray:
+    of CHTypeKind.Array:
       elem_type*: CHType
-    of chkNullable:
+    of CHTypeKind.Nullable:
       inner_type*: CHType
-    of chkTuple:
+    of CHTypeKind.Tuple:
       elem_types*: seq[CHType]
-    of chkMap:
+    of CHTypeKind.Map:
       key_type*: CHType
       val_type*: CHType
-    of chkLowCardinality:
+    of CHTypeKind.LowCardinality:
       dict_type*: CHType
     else:
       discard
@@ -77,28 +77,28 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
 
   # Simple types
   case s
-  of "UInt8": return CHType(kind: chkUInt8)
-  of "UInt16": return CHType(kind: chkUInt16)
-  of "UInt32": return CHType(kind: chkUInt32)
-  of "UInt64": return CHType(kind: chkUInt64)
-  of "UInt128": return CHType(kind: chkUInt128)
-  of "UInt256": return CHType(kind: chkUInt256)
-  of "Int8": return CHType(kind: chkInt8)
-  of "Int16": return CHType(kind: chkInt16)
-  of "Int32": return CHType(kind: chkInt32)
-  of "Int64": return CHType(kind: chkInt64)
-  of "Int128": return CHType(kind: chkInt128)
-  of "Int256": return CHType(kind: chkInt256)
-  of "Float32": return CHType(kind: chkFloat32)
-  of "Float64": return CHType(kind: chkFloat64)
-  of "Bool": return CHType(kind: chkBool)
-  of "String": return CHType(kind: chkString)
-  of "Date": return CHType(kind: chkDate)
-  of "Date32": return CHType(kind: chkDate32)
-  of "UUID": return CHType(kind: chkUUID)
-  of "IPv4": return CHType(kind: chkIPv4)
-  of "IPv6": return CHType(kind: chkIPv6)
-  of "Nothing": return CHType(kind: chkNothing)
+  of "UInt8": return CHType(kind: CHTypeKind.UInt8)
+  of "UInt16": return CHType(kind: CHTypeKind.UInt16)
+  of "UInt32": return CHType(kind: CHTypeKind.UInt32)
+  of "UInt64": return CHType(kind: CHTypeKind.UInt64)
+  of "UInt128": return CHType(kind: CHTypeKind.UInt128)
+  of "UInt256": return CHType(kind: CHTypeKind.UInt256)
+  of "Int8": return CHType(kind: CHTypeKind.Int8)
+  of "Int16": return CHType(kind: CHTypeKind.Int16)
+  of "Int32": return CHType(kind: CHTypeKind.Int32)
+  of "Int64": return CHType(kind: CHTypeKind.Int64)
+  of "Int128": return CHType(kind: CHTypeKind.Int128)
+  of "Int256": return CHType(kind: CHTypeKind.Int256)
+  of "Float32": return CHType(kind: CHTypeKind.Float32)
+  of "Float64": return CHType(kind: CHTypeKind.Float64)
+  of "Bool": return CHType(kind: CHTypeKind.Bool)
+  of "String": return CHType(kind: CHTypeKind.String)
+  of "Date": return CHType(kind: CHTypeKind.Date)
+  of "Date32": return CHType(kind: CHTypeKind.Date32)
+  of "UUID": return CHType(kind: CHTypeKind.UUID)
+  of "IPv4": return CHType(kind: CHTypeKind.IPv4)
+  of "IPv6": return CHType(kind: CHTypeKind.IPv6)
+  of "Nothing": return CHType(kind: CHTypeKind.Nothing)
   else:
     discard
 
@@ -108,7 +108,7 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
     var n: int
     if parseInt(inner, n) == 0:
       raise newException(ValueError, "invalid FixedString length: " & inner)
-    return CHType(kind: chkFixedString, fixed_len: n)
+    return CHType(kind: CHTypeKind.FixedString, fixed_len: n)
 
   if s.starts_with("DateTime64("):
     let inner = s[11 ..< s.len - 1]
@@ -117,42 +117,42 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
     if parseInt(parts[0].strip(), prec) == 0:
       raise newException(ValueError, "invalid DateTime64 precision: " & parts[0])
     let tz_str = if parts.len > 1: parts[1].strip().strip(chars = {'\'', '"'}) else: ""
-    return CHType(kind: chkDateTime64, precision: prec, tz64: tz_str)
+    return CHType(kind: CHTypeKind.DateTime64, precision: prec, tz64: tz_str)
 
   if s.starts_with("DateTime("):
     let inner = s[9 ..< s.len - 1].strip().strip(chars = {'\'', '"'})
-    return CHType(kind: chkDateTime, tz: inner)
+    return CHType(kind: CHTypeKind.DateTime, tz: inner)
 
   if s == "DateTime":
-    return CHType(kind: chkDateTime, tz: "")
+    return CHType(kind: CHTypeKind.DateTime, tz: "")
 
   if s.starts_with("Decimal256("):
     let inner = s[11 ..< s.len - 1]
     var sc: int
     if parseInt(inner.strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal256 scale: " & inner)
-    return CHType(kind: chkDecimal256, scale: sc)
+    return CHType(kind: CHTypeKind.Decimal256, scale: sc)
 
   if s.starts_with("Decimal128("):
     let inner = s[11 ..< s.len - 1]
     var sc: int
     if parseInt(inner.strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal128 scale: " & inner)
-    return CHType(kind: chkDecimal128, scale: sc)
+    return CHType(kind: CHTypeKind.Decimal128, scale: sc)
 
   if s.starts_with("Decimal64("):
     let inner = s[10 ..< s.len - 1]
     var sc: int
     if parseInt(inner.strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal64 scale: " & inner)
-    return CHType(kind: chkDecimal64, scale: sc)
+    return CHType(kind: CHTypeKind.Decimal64, scale: sc)
 
   if s.starts_with("Decimal32("):
     let inner = s[10 ..< s.len - 1]
     var sc: int
     if parseInt(inner.strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal32 scale: " & inner)
-    return CHType(kind: chkDecimal32, scale: sc)
+    return CHType(kind: CHTypeKind.Decimal32, scale: sc)
 
   if s.starts_with("Decimal("):
     let inner = s[8 ..< s.len - 1]
@@ -164,23 +164,23 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
       raise newException(ValueError, "invalid Decimal precision: " & parts[0])
     if parseInt(parts[1].strip(), sc) == 0:
       raise newException(ValueError, "invalid Decimal scale: " & parts[1])
-    if prec <= 9: return CHType(kind: chkDecimal32, scale: sc)
-    elif prec <= 18: return CHType(kind: chkDecimal64, scale: sc)
-    elif prec <= 38: return CHType(kind: chkDecimal128, scale: sc)
-    else: return CHType(kind: chkDecimal256, scale: sc)
+    if prec <= 9: return CHType(kind: CHTypeKind.Decimal32, scale: sc)
+    elif prec <= 18: return CHType(kind: CHTypeKind.Decimal64, scale: sc)
+    elif prec <= 38: return CHType(kind: CHTypeKind.Decimal128, scale: sc)
+    else: return CHType(kind: CHTypeKind.Decimal256, scale: sc)
 
   # Nested parameterized types -- need bracket matching
   if s.starts_with("Nullable("):
     let inner = s[9 ..< s.len - 1]
-    return CHType(kind: chkNullable, inner_type: parse_ch_type(inner))
+    return CHType(kind: CHTypeKind.Nullable, inner_type: parse_ch_type(inner))
 
   if s.starts_with("Array("):
     let inner = s[6 ..< s.len - 1]
-    return CHType(kind: chkArray, elem_type: parse_ch_type(inner))
+    return CHType(kind: CHTypeKind.Array, elem_type: parse_ch_type(inner))
 
   if s.starts_with("LowCardinality("):
     let inner = s[15 ..< s.len - 1]
-    return CHType(kind: chkLowCardinality, dict_type: parse_ch_type(inner))
+    return CHType(kind: CHTypeKind.LowCardinality, dict_type: parse_ch_type(inner))
 
   if s.starts_with("Map("):
     let inner = s[4 ..< s.len - 1]
@@ -197,7 +197,7 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
       raise newException(ValueError, "invalid Map type: " & s)
     let kt = parse_ch_type(inner[0 ..< split_pos].strip())
     let vt = parse_ch_type(inner[split_pos + 1 ..< inner.len].strip())
-    return CHType(kind: chkMap, key_type: kt, val_type: vt)
+    return CHType(kind: CHTypeKind.Map, key_type: kt, val_type: vt)
 
   if s.starts_with("Tuple("):
     let inner = s[6 ..< s.len - 1]
@@ -211,7 +211,7 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
         elems.add(parse_ch_type(inner[start ..< i].strip()))
         start = i + 1
     elems.add(parse_ch_type(inner[start ..< inner.len].strip()))
-    return CHType(kind: chkTuple, elem_types: elems)
+    return CHType(kind: CHTypeKind.Tuple, elem_types: elems)
 
   if s.starts_with("Enum8(") or s.starts_with("Enum16("):
     let is8 = s.starts_with("Enum8(")
@@ -229,9 +229,9 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
         raise newException(ValueError, "invalid Enum value: " & p)
       values.add((name, int16(val)))
     if is8:
-      return CHType(kind: chkEnum8, enum_values: values)
+      return CHType(kind: CHTypeKind.Enum8, enum_values: values)
     else:
-      return CHType(kind: chkEnum16, enum_values: values)
+      return CHType(kind: CHTypeKind.Enum16, enum_values: values)
 
   raise newException(ValueError, "unknown ClickHouse type: " & s)
 
@@ -242,36 +242,36 @@ proc parse_ch_type*(type_str: string): CHType {.parse_err.} =
 type
   CHValue* = object
     case kind*: CHTypeKind
-    of chkUInt8, chkBool: u8*: uint8
-    of chkUInt16: u16*: uint16
-    of chkUInt32, chkIPv4: u32*: uint32
-    of chkUInt64: u64*: uint64
-    of chkUInt128: u128_hi*, u128_lo*: uint64
-    of chkUInt256: u256*: array[4, uint64]
-    of chkInt8: i8*: int8
-    of chkInt16, chkEnum8, chkEnum16: i16*: int16
-    of chkInt32, chkDate32: i32*: int32
-    of chkInt64, chkDateTime64: i64*: int64
-    of chkInt128, chkDecimal128: i128_hi*, i128_lo*: uint64
-    of chkInt256, chkDecimal256: i256*: array[4, uint64]
-    of chkFloat32: f32*: float32
-    of chkFloat64: f64*: float64
-    of chkString: str*: string
-    of chkFixedString: fixed_str*: seq[uint8]
-    of chkDate: date_days*: uint16
-    of chkDateTime: datetime_ts*: uint32
-    of chkDecimal32: d32*: int32
-    of chkDecimal64: d64*: int64
-    of chkUUID: uuid_hi*, uuid_lo*: uint64
-    of chkIPv6: ipv6*: array[16, uint8]
-    of chkArray: arr*: seq[CHValue]
-    of chkNullable:
+    of CHTypeKind.UInt8, CHTypeKind.Bool: u8*: uint8
+    of CHTypeKind.UInt16: u16*: uint16
+    of CHTypeKind.UInt32, CHTypeKind.IPv4: u32*: uint32
+    of CHTypeKind.UInt64: u64*: uint64
+    of CHTypeKind.UInt128: u128_hi*, u128_lo*: uint64
+    of CHTypeKind.UInt256: u256*: array[4, uint64]
+    of CHTypeKind.Int8: i8*: int8
+    of CHTypeKind.Int16, CHTypeKind.Enum8, CHTypeKind.Enum16: i16*: int16
+    of CHTypeKind.Int32, CHTypeKind.Date32: i32*: int32
+    of CHTypeKind.Int64, CHTypeKind.DateTime64: i64*: int64
+    of CHTypeKind.Int128, CHTypeKind.Decimal128: i128_hi*, i128_lo*: uint64
+    of CHTypeKind.Int256, CHTypeKind.Decimal256: i256*: array[4, uint64]
+    of CHTypeKind.Float32: f32*: float32
+    of CHTypeKind.Float64: f64*: float64
+    of CHTypeKind.String: str*: string
+    of CHTypeKind.FixedString: fixed_str*: seq[uint8]
+    of CHTypeKind.Date: date_days*: uint16
+    of CHTypeKind.DateTime: datetime_ts*: uint32
+    of CHTypeKind.Decimal32: d32*: int32
+    of CHTypeKind.Decimal64: d64*: int64
+    of CHTypeKind.UUID: uuid_hi*, uuid_lo*: uint64
+    of CHTypeKind.IPv6: ipv6*: array[16, uint8]
+    of CHTypeKind.Array: arr*: seq[CHValue]
+    of CHTypeKind.Nullable:
       is_null*: bool
       nullable_val*: ref CHValue
-    of chkTuple: tup*: seq[CHValue]
-    of chkMap: map_keys*, map_vals*: seq[CHValue]
-    of chkLowCardinality: lc_val*: ref CHValue
-    of chkNothing: discard
+    of CHTypeKind.Tuple: tup*: seq[CHValue]
+    of CHTypeKind.Map: map_keys*, map_vals*: seq[CHValue]
+    of CHTypeKind.LowCardinality: lc_val*: ref CHValue
+    of CHTypeKind.Nothing: discard
 
   CHColumn* = object
     name*: string
@@ -286,116 +286,116 @@ proc read_column_data*(sock: Socket; col_type: CHType; num_rows: int): seq[CHVal
   ## Read num_rows of column data for the given type.
   result = newSeq[CHValue](num_rows)
   case col_type.kind
-  of chkUInt8, chkBool:
+  of CHTypeKind.UInt8, CHTypeKind.Bool:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkUInt8, u8: sock.read_uint8())
-  of chkUInt16:
+      result[i] = CHValue(kind: CHTypeKind.UInt8, u8: sock.read_uint8())
+  of CHTypeKind.UInt16:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkUInt16, u16: sock.read_uint16())
-  of chkUInt32:
+      result[i] = CHValue(kind: CHTypeKind.UInt16, u16: sock.read_uint16())
+  of CHTypeKind.UInt32:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkUInt32, u32: sock.read_uint32())
-  of chkUInt64:
+      result[i] = CHValue(kind: CHTypeKind.UInt32, u32: sock.read_uint32())
+  of CHTypeKind.UInt64:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkUInt64, u64: sock.read_uint64())
-  of chkUInt128:
+      result[i] = CHValue(kind: CHTypeKind.UInt64, u64: sock.read_uint64())
+  of CHTypeKind.UInt128:
     for i in 0 ..< num_rows:
       let lo = sock.read_uint64()
       let hi = sock.read_uint64()
-      result[i] = CHValue(kind: chkUInt128, u128_lo: lo, u128_hi: hi)
-  of chkUInt256:
+      result[i] = CHValue(kind: CHTypeKind.UInt128, u128_lo: lo, u128_hi: hi)
+  of CHTypeKind.UInt256:
     for i in 0 ..< num_rows:
       var arr: array[4, uint64]
       for j in 0 ..< 4:
         arr[j] = sock.read_uint64()
-      result[i] = CHValue(kind: chkUInt256, u256: arr)
-  of chkInt8:
+      result[i] = CHValue(kind: CHTypeKind.UInt256, u256: arr)
+  of CHTypeKind.Int8:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkInt8, i8: sock.read_int8())
-  of chkInt16:
+      result[i] = CHValue(kind: CHTypeKind.Int8, i8: sock.read_int8())
+  of CHTypeKind.Int16:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkInt16, i16: sock.read_int16())
-  of chkInt32:
+      result[i] = CHValue(kind: CHTypeKind.Int16, i16: sock.read_int16())
+  of CHTypeKind.Int32:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkInt32, i32: sock.read_int32())
-  of chkInt64:
+      result[i] = CHValue(kind: CHTypeKind.Int32, i32: sock.read_int32())
+  of CHTypeKind.Int64:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkInt64, i64: sock.read_int64())
-  of chkInt128:
+      result[i] = CHValue(kind: CHTypeKind.Int64, i64: sock.read_int64())
+  of CHTypeKind.Int128:
     for i in 0 ..< num_rows:
       let lo = sock.read_uint64()
       let hi = sock.read_uint64()
-      result[i] = CHValue(kind: chkInt128, i128_lo: lo, i128_hi: hi)
-  of chkInt256:
+      result[i] = CHValue(kind: CHTypeKind.Int128, i128_lo: lo, i128_hi: hi)
+  of CHTypeKind.Int256:
     for i in 0 ..< num_rows:
       var arr: array[4, uint64]
       for j in 0 ..< 4:
         arr[j] = sock.read_uint64()
-      result[i] = CHValue(kind: chkInt256, i256: arr)
-  of chkFloat32:
+      result[i] = CHValue(kind: CHTypeKind.Int256, i256: arr)
+  of CHTypeKind.Float32:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkFloat32, f32: sock.read_float32())
-  of chkFloat64:
+      result[i] = CHValue(kind: CHTypeKind.Float32, f32: sock.read_float32())
+  of CHTypeKind.Float64:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkFloat64, f64: sock.read_float64())
-  of chkString:
+      result[i] = CHValue(kind: CHTypeKind.Float64, f64: sock.read_float64())
+  of CHTypeKind.String:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkString, str: sock.read_string())
-  of chkFixedString:
+      result[i] = CHValue(kind: CHTypeKind.String, str: sock.read_string())
+  of CHTypeKind.FixedString:
     for i in 0 ..< num_rows:
       var buf = newSeq[uint8](col_type.fixed_len)
       if col_type.fixed_len > 0:
         sock.read_raw(addr buf[0], col_type.fixed_len)
-      result[i] = CHValue(kind: chkFixedString, fixed_str: buf)
-  of chkDate:
+      result[i] = CHValue(kind: CHTypeKind.FixedString, fixed_str: buf)
+  of CHTypeKind.Date:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkDate, date_days: sock.read_uint16())
-  of chkDate32:
+      result[i] = CHValue(kind: CHTypeKind.Date, date_days: sock.read_uint16())
+  of CHTypeKind.Date32:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkDate32, i32: sock.read_int32())
-  of chkDateTime:
+      result[i] = CHValue(kind: CHTypeKind.Date32, i32: sock.read_int32())
+  of CHTypeKind.DateTime:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkDateTime, datetime_ts: sock.read_uint32())
-  of chkDateTime64:
+      result[i] = CHValue(kind: CHTypeKind.DateTime, datetime_ts: sock.read_uint32())
+  of CHTypeKind.DateTime64:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkDateTime64, i64: sock.read_int64())
-  of chkDecimal32:
+      result[i] = CHValue(kind: CHTypeKind.DateTime64, i64: sock.read_int64())
+  of CHTypeKind.Decimal32:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkDecimal32, d32: sock.read_int32())
-  of chkDecimal64:
+      result[i] = CHValue(kind: CHTypeKind.Decimal32, d32: sock.read_int32())
+  of CHTypeKind.Decimal64:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkDecimal64, d64: sock.read_int64())
-  of chkDecimal128:
+      result[i] = CHValue(kind: CHTypeKind.Decimal64, d64: sock.read_int64())
+  of CHTypeKind.Decimal128:
     for i in 0 ..< num_rows:
       let lo = sock.read_uint64()
       let hi = sock.read_uint64()
-      result[i] = CHValue(kind: chkDecimal128, i128_lo: lo, i128_hi: hi)
-  of chkDecimal256:
+      result[i] = CHValue(kind: CHTypeKind.Decimal128, i128_lo: lo, i128_hi: hi)
+  of CHTypeKind.Decimal256:
     for i in 0 ..< num_rows:
       var arr: array[4, uint64]
       for j in 0 ..< 4:
         arr[j] = sock.read_uint64()
-      result[i] = CHValue(kind: chkDecimal256, i256: arr)
-  of chkUUID:
+      result[i] = CHValue(kind: CHTypeKind.Decimal256, i256: arr)
+  of CHTypeKind.UUID:
     for i in 0 ..< num_rows:
       let hi = sock.read_uint64()
       let lo = sock.read_uint64()
-      result[i] = CHValue(kind: chkUUID, uuid_hi: hi, uuid_lo: lo)
-  of chkIPv4:
+      result[i] = CHValue(kind: CHTypeKind.UUID, uuid_hi: hi, uuid_lo: lo)
+  of CHTypeKind.IPv4:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkIPv4, u32: sock.read_uint32())
-  of chkIPv6:
+      result[i] = CHValue(kind: CHTypeKind.IPv4, u32: sock.read_uint32())
+  of CHTypeKind.IPv6:
     for i in 0 ..< num_rows:
       var addr_bytes: array[16, uint8]
       sock.read_raw(addr addr_bytes[0], 16)
-      result[i] = CHValue(kind: chkIPv6, ipv6: addr_bytes)
-  of chkEnum8:
+      result[i] = CHValue(kind: CHTypeKind.IPv6, ipv6: addr_bytes)
+  of CHTypeKind.Enum8:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkEnum8, i16: int16(sock.read_int8()))
-  of chkEnum16:
+      result[i] = CHValue(kind: CHTypeKind.Enum8, i16: int16(sock.read_int8()))
+  of CHTypeKind.Enum16:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkEnum16, i16: sock.read_int16())
-  of chkNullable:
+      result[i] = CHValue(kind: CHTypeKind.Enum16, i16: sock.read_int16())
+  of CHTypeKind.Nullable:
     # Read null bitmap
     var nulls = newSeq[uint8](num_rows)
     for i in 0 ..< num_rows:
@@ -404,12 +404,12 @@ proc read_column_data*(sock: Socket; col_type: CHType; num_rows: int): seq[CHVal
     let inner = sock.read_column_data(col_type.inner_type, num_rows)
     for i in 0 ..< num_rows:
       if nulls[i] != 0:
-        result[i] = CHValue(kind: chkNullable, is_null: true, nullable_val: nil)
+        result[i] = CHValue(kind: CHTypeKind.Nullable, is_null: true, nullable_val: nil)
       else:
         var v = new(CHValue)
         v[] = inner[i]
-        result[i] = CHValue(kind: chkNullable, is_null: false, nullable_val: v)
-  of chkArray:
+        result[i] = CHValue(kind: CHTypeKind.Nullable, is_null: false, nullable_val: v)
+  of CHTypeKind.Array:
     # Read offsets
     var offsets = newSeq[uint64](num_rows)
     for i in 0 ..< num_rows:
@@ -422,9 +422,9 @@ proc read_column_data*(sock: Socket; col_type: CHType; num_rows: int): seq[CHVal
     var prev: int = 0
     for i in 0 ..< num_rows:
       let cur = int(offsets[i])
-      result[i] = CHValue(kind: chkArray, arr: all_elems[prev ..< cur])
+      result[i] = CHValue(kind: CHTypeKind.Array, arr: all_elems[prev ..< cur])
       prev = cur
-  of chkTuple:
+  of CHTypeKind.Tuple:
     # Each element type column is read sequentially
     var cols: seq[seq[CHValue]] = @[]
     for t in col_type.elem_types:
@@ -433,8 +433,8 @@ proc read_column_data*(sock: Socket; col_type: CHType; num_rows: int): seq[CHVal
       var tup: seq[CHValue] = @[]
       for c in cols:
         tup.add(c[i])
-      result[i] = CHValue(kind: chkTuple, tup: tup)
-  of chkMap:
+      result[i] = CHValue(kind: CHTypeKind.Tuple, tup: tup)
+  of CHTypeKind.Map:
     # Map is encoded as Array(Tuple(K, V))
     # Read offsets
     var offsets = newSeq[uint64](num_rows)
@@ -447,11 +447,11 @@ proc read_column_data*(sock: Socket; col_type: CHType; num_rows: int): seq[CHVal
     var prev: int = 0
     for i in 0 ..< num_rows:
       let cur = int(offsets[i])
-      result[i] = CHValue(kind: chkMap,
+      result[i] = CHValue(kind: CHTypeKind.Map,
                            map_keys: keys[prev ..< cur],
                            map_vals: vals[prev ..< cur])
       prev = cur
-  of chkLowCardinality:
+  of CHTypeKind.LowCardinality:
     # Read serialization version (int64, always 1)
     discard sock.read_int64()
     # Read serialization type
@@ -481,10 +481,10 @@ proc read_column_data*(sock: Socket; col_type: CHType; num_rows: int): seq[CHVal
     for i in 0 ..< int(num_keys):
       var v = new(CHValue)
       v[] = dict[indices[i]]
-      result[i] = CHValue(kind: chkLowCardinality, lc_val: v)
-  of chkNothing:
+      result[i] = CHValue(kind: CHTypeKind.LowCardinality, lc_val: v)
+  of CHTypeKind.Nothing:
     for i in 0 ..< num_rows:
-      result[i] = CHValue(kind: chkNothing)
+      result[i] = CHValue(kind: CHTypeKind.Nothing)
 
 #=======================================================================================================================
 #== WRITE COLUMN DATA TO SOCKET ========================================================================================
@@ -493,85 +493,85 @@ proc read_column_data*(sock: Socket; col_type: CHType; num_rows: int): seq[CHVal
 proc write_column_data*(sock: Socket; col_type: CHType; data: openArray[CHValue]) {.io_err.} =
   ## Write column data for the given type.
   case col_type.kind
-  of chkUInt8, chkBool:
+  of CHTypeKind.UInt8, CHTypeKind.Bool:
     for v in data: sock.write_uint8(v.u8)
-  of chkUInt16:
+  of CHTypeKind.UInt16:
     for v in data: sock.write_uint16(v.u16)
-  of chkUInt32:
+  of CHTypeKind.UInt32:
     for v in data: sock.write_uint32(v.u32)
-  of chkUInt64:
+  of CHTypeKind.UInt64:
     for v in data: sock.write_uint64(v.u64)
-  of chkUInt128:
+  of CHTypeKind.UInt128:
     for v in data:
       sock.write_uint64(v.u128_lo)
       sock.write_uint64(v.u128_hi)
-  of chkUInt256:
+  of CHTypeKind.UInt256:
     for v in data:
       for j in 0 ..< 4:
         sock.write_uint64(v.u256[j])
-  of chkInt8:
+  of CHTypeKind.Int8:
     for v in data: sock.write_int8(v.i8)
-  of chkInt16:
+  of CHTypeKind.Int16:
     for v in data: sock.write_int16(v.i16)
-  of chkInt32:
+  of CHTypeKind.Int32:
     for v in data: sock.write_int32(v.i32)
-  of chkInt64:
+  of CHTypeKind.Int64:
     for v in data: sock.write_int64(v.i64)
-  of chkInt128:
+  of CHTypeKind.Int128:
     for v in data:
       sock.write_uint64(v.i128_lo)
       sock.write_uint64(v.i128_hi)
-  of chkInt256:
+  of CHTypeKind.Int256:
     for v in data:
       for j in 0 ..< 4:
         sock.write_uint64(v.i256[j])
-  of chkFloat32:
+  of CHTypeKind.Float32:
     for v in data: sock.write_float32(v.f32)
-  of chkFloat64:
+  of CHTypeKind.Float64:
     for v in data: sock.write_float64(v.f64)
-  of chkString:
+  of CHTypeKind.String:
     for v in data: sock.write_string(v.str)
-  of chkFixedString:
+  of CHTypeKind.FixedString:
     for v in data:
       if v.fixed_str.len > 0:
         sock.write_raw(unsafeAddr v.fixed_str[0], col_type.fixed_len)
       else:
         var zeros = newSeq[uint8](col_type.fixed_len)
         sock.write_raw(addr zeros[0], col_type.fixed_len)
-  of chkDate:
+  of CHTypeKind.Date:
     for v in data: sock.write_uint16(v.date_days)
-  of chkDate32:
+  of CHTypeKind.Date32:
     for v in data: sock.write_int32(v.i32)
-  of chkDateTime:
+  of CHTypeKind.DateTime:
     for v in data: sock.write_uint32(v.datetime_ts)
-  of chkDateTime64:
+  of CHTypeKind.DateTime64:
     for v in data: sock.write_int64(v.i64)
-  of chkDecimal32:
+  of CHTypeKind.Decimal32:
     for v in data: sock.write_int32(v.d32)
-  of chkDecimal64:
+  of CHTypeKind.Decimal64:
     for v in data: sock.write_int64(v.d64)
-  of chkDecimal128:
+  of CHTypeKind.Decimal128:
     for v in data:
       sock.write_uint64(v.i128_lo)
       sock.write_uint64(v.i128_hi)
-  of chkDecimal256:
+  of CHTypeKind.Decimal256:
     for v in data:
       for j in 0 ..< 4:
         sock.write_uint64(v.i256[j])
-  of chkUUID:
+  of CHTypeKind.UUID:
     for v in data:
       sock.write_uint64(v.uuid_hi)
       sock.write_uint64(v.uuid_lo)
-  of chkIPv4:
+  of CHTypeKind.IPv4:
     for v in data: sock.write_uint32(v.u32)
-  of chkIPv6:
+  of CHTypeKind.IPv6:
     for v in data:
       sock.write_raw(unsafeAddr v.ipv6[0], 16)
-  of chkEnum8:
+  of CHTypeKind.Enum8:
     for v in data: sock.write_int8(int8(v.i16))
-  of chkEnum16:
+  of CHTypeKind.Enum16:
     for v in data: sock.write_int16(v.i16)
-  of chkNullable:
+  of CHTypeKind.Nullable:
     # Null bitmap
     for v in data:
       sock.write_uint8(if v.is_null: 1'u8 else: 0'u8)
@@ -583,7 +583,7 @@ proc write_column_data*(sock: Socket; col_type: CHType; data: openArray[CHValue]
       else:
         inner_data[i] = data[i].nullable_val[]
     sock.write_column_data(col_type.inner_type, inner_data)
-  of chkArray:
+  of CHTypeKind.Array:
     # Write offsets
     var offset: uint64 = 0
     for v in data:
@@ -594,13 +594,13 @@ proc write_column_data*(sock: Socket; col_type: CHType; data: openArray[CHValue]
     for v in data:
       all_elems.add(v.arr)
     sock.write_column_data(col_type.elem_type, all_elems)
-  of chkTuple:
+  of CHTypeKind.Tuple:
     for idx, t in col_type.elem_types:
       var col_data = newSeq[CHValue](data.len)
       for i in 0 ..< data.len:
         col_data[i] = data[i].tup[idx]
       sock.write_column_data(t, col_data)
-  of chkMap:
+  of CHTypeKind.Map:
     # Write offsets
     var offset: uint64 = 0
     for v in data:
@@ -614,7 +614,7 @@ proc write_column_data*(sock: Socket; col_type: CHType; data: openArray[CHValue]
       all_vals.add(v.map_vals)
     sock.write_column_data(col_type.key_type, all_keys)
     sock.write_column_data(col_type.val_type, all_vals)
-  of chkLowCardinality:
+  of CHTypeKind.LowCardinality:
     # Write as full dictionary per block (simple approach)
     sock.write_int64(1) # serialization version
     # Build dictionary
@@ -645,5 +645,5 @@ proc write_column_data*(sock: Socket; col_type: CHType; data: openArray[CHValue]
       for idx in index_map: sock.write_uint32(uint32(idx))
     else:
       for idx in index_map: sock.write_uint64(uint64(idx))
-  of chkNothing:
+  of CHTypeKind.Nothing:
     discard

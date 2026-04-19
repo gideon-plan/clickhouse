@@ -61,29 +61,29 @@ suite "client integration":
     # Build data block
     let col_id = CHColumn(
       name: "id",
-      col_type: CHType(kind: chkUInt32),
+      col_type: CHType(kind: CHTypeKind.UInt32),
       data: @[
-        CHValue(kind: chkUInt32, u32: 1),
-        CHValue(kind: chkUInt32, u32: 2),
-        CHValue(kind: chkUInt32, u32: 3),
+        CHValue(kind: CHTypeKind.UInt32, u32: 1),
+        CHValue(kind: CHTypeKind.UInt32, u32: 2),
+        CHValue(kind: CHTypeKind.UInt32, u32: 3),
       ]
     )
     let col_name = CHColumn(
       name: "name",
-      col_type: CHType(kind: chkString),
+      col_type: CHType(kind: CHTypeKind.String),
       data: @[
-        CHValue(kind: chkString, str: "alpha"),
-        CHValue(kind: chkString, str: "beta"),
-        CHValue(kind: chkString, str: "gamma"),
+        CHValue(kind: CHTypeKind.String, str: "alpha"),
+        CHValue(kind: CHTypeKind.String, str: "beta"),
+        CHValue(kind: CHTypeKind.String, str: "gamma"),
       ]
     )
     let col_val = CHColumn(
       name: "val",
-      col_type: CHType(kind: chkFloat64),
+      col_type: CHType(kind: CHTypeKind.Float64),
       data: @[
-        CHValue(kind: chkFloat64, f64: 1.1),
-        CHValue(kind: chkFloat64, f64: 2.2),
-        CHValue(kind: chkFloat64, f64: 3.3),
+        CHValue(kind: CHTypeKind.Float64, f64: 1.1),
+        CHValue(kind: CHTypeKind.Float64, f64: 2.2),
+        CHValue(kind: CHTypeKind.Float64, f64: 3.3),
       ]
     )
     let blk = CHBlock(
